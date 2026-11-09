@@ -7,6 +7,7 @@
 
 import asyncio
 import os
+import threading
 import traceback
 import urllib.parse
 
@@ -44,6 +45,17 @@ def run_data_migrations():
 
 
 server_instance = None
+_server_lock = threading.RLock()
+_stop_requested = threading.Event()
+
+
+def prepare_server():
+    # Called once for each new Java service generation, before it is published.
+    with _server_lock:
+        if server_instance is not None:
+            raise RuntimeError("cannot prepare while server is running")
+        _stop_requested.clear()
+
 
 
 def setup_server():
@@ -57,26 +69,37 @@ def setup_server():
 def start_server(host: str = "127.0.0.1", port: int = 51376):
     global server_instance, had_run_once
 
-    if server_instance is not None:
-        raise RuntimeError("cannot start server twice")
+    with _server_lock:
+        if server_instance is not None:
+            raise RuntimeError("cannot start server twice")
+        # shutdown may arrive while setup_server() is still running.
+        if _stop_requested.is_set():
+            return
 
-    had_run_once = True
-    import npps4.run.app
+        had_run_once = True
+        import npps4.run.app
 
-    cfg = uvicorn.Config(npps4.run.app.main, host=host, port=port, loop="npps4.evloop:new_event_loop")
-    server_instance = uvicorn.Server(cfg)
-    server_instance.run()
-    server_instance = None
+        cfg = uvicorn.Config(npps4.run.app.main, host=host, port=port, loop="npps4.evloop:new_event_loop")
+        instance = uvicorn.Server(cfg)
+        server_instance = instance
+        if _stop_requested.is_set():
+            instance.should_exit = True
+
+    try:
+        instance.run()
+    finally:
+        with _server_lock:
+            if server_instance is instance:
+                server_instance = None
 
 
 def stop_server():
-    global server_instance
-
-    si = server_instance
-    if si is None or si.should_exit:
-        raise RuntimeError("cannot stop server that's not started")
-
-    si.should_exit = True
+    # Idempotent: a stop during setup or before Uvicorn publication is valid.
+    _stop_requested.set()
+    with _server_lock:
+        si = server_instance
+        if si is not None:
+            si.should_exit = True
 
 
 def import_database(db: bytes):
