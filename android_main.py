@@ -57,7 +57,6 @@ def prepare_server():
         _stop_requested.clear()
 
 
-
 def setup_server():
     global had_run_once
 
