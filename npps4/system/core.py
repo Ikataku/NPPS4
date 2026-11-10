@@ -30,10 +30,17 @@ def get_next_exp_cumulative(rank: int):
     return sum(map(get_next_exp, range(1, rank + 1)))
 
 
-def validate_exp_delta(exp: int) -> int:
-    """Reject invalid reward deltas; downward EXP edits need a dedicated rank/LP reconciliation path."""
+MAX_SQLITE_INT = (1 << 63) - 1
+
+
+def validate_exp_delta(exp: int, current_exp: int = 0) -> int:
+    """Validate a non-negative reward delta and the resulting SQLite EXP total."""
     if type(exp) is not int or exp < 0:
         raise ValueError("EXP delta must be a non-negative integer")
+    if type(current_exp) is not int or current_exp < 0 or current_exp > MAX_SQLITE_INT:
+        raise ValueError("current EXP must be a non-negative SQLite integer")
+    if exp > MAX_SQLITE_INT - current_exp:
+        raise ValueError("resulting EXP exceeds SQLite signed 64-bit integer range")
     return exp
 
 

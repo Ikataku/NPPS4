@@ -228,7 +228,7 @@ def add_energy_percentage(
 
 
 async def add_exp(context: idol.BasicSchoolIdolContext, user: main.User, exp: int):
-    exp = core.validate_exp_delta(exp)
+    exp = core.validate_exp_delta(exp, user.exp)
     next_exp = core.get_next_exp_cumulative(user.level)
     level_up = False
     max_energy = 0
