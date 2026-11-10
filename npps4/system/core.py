@@ -30,6 +30,13 @@ def get_next_exp_cumulative(rank: int):
     return sum(map(get_next_exp, range(1, rank + 1)))
 
 
+def validate_exp_delta(exp: int) -> int:
+    """Reject invalid reward deltas; downward EXP edits need a dedicated rank/LP reconciliation path."""
+    if type(exp) is not int or exp < 0:
+        raise ValueError("EXP delta must be a non-negative integer")
+    return exp
+
+
 # functools.cache does not play very well with type checking right now.
 if not TYPE_CHECKING:
     get_next_exp_cumulative = functools.cache(get_next_exp_cumulative)
