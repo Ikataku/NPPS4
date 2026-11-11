@@ -22,8 +22,6 @@ jobs:
         run: venv/bin/python -m unittest discover -s tests -v
       - name: Install PyRight
         run: npm install -g pyright@">1.1.376||<1.1.376"
-      - name: Print Black diff for EXP rank-up regression test
-        run: venv/bin/black -l 120 --diff tests/test_add_exp_rankup.py
       - name: Check Black Formatter
         run: venv/bin/black -l 120 --check .
       - name: Check PyRight Syntax

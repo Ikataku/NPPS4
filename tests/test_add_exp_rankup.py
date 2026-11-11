@@ -3,7 +3,6 @@ import importlib.util
 from pathlib import Path
 import unittest
 
-
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 CORE_PATH = BACKEND_ROOT / "npps4" / "system" / "core.py"
 USER_PATH = BACKEND_ROOT / "npps4" / "system" / "user.py"
@@ -53,11 +52,7 @@ class AddExpRankUpTests(unittest.TestCase):
         cls.core = _load_core()
         cls.user_tree = ast.parse(USER_PATH.read_text(encoding="utf-8"))
         cls.add_exp = next(
-            (
-                node
-                for node in cls.user_tree.body
-                if isinstance(node, ast.AsyncFunctionDef) and node.name == "add_exp"
-            ),
+            (node for node in cls.user_tree.body if isinstance(node, ast.AsyncFunctionDef) and node.name == "add_exp"),
             None,
         )
         if cls.add_exp is None:
@@ -70,9 +65,7 @@ class AddExpRankUpTests(unittest.TestCase):
                 self.assertEqual(self.core.get_next_exp_cumulative(rank), expected)
 
     def test_actual_add_exp_uses_one_initial_lookup_and_incremental_loop(self):
-        cumulative_calls = [
-            node for node in ast.walk(self.add_exp) if _is_core_call(node, "get_next_exp_cumulative")
-        ]
+        cumulative_calls = [node for node in ast.walk(self.add_exp) if _is_core_call(node, "get_next_exp_cumulative")]
         self.assertEqual(len(cumulative_calls), 1)
 
         loops = [node for node in ast.walk(self.add_exp) if isinstance(node, ast.While)]
