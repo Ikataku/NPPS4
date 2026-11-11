@@ -23,7 +23,11 @@ jobs:
       - name: Install PyRight
         run: npm install -g pyright@">1.1.376||<1.1.376"
       - name: Check Black Formatter
-        run: venv/bin/black -l 120 --check .
+        run: |
+          venv/bin/black -l 120 --check . || {
+            venv/bin/black -l 120 --diff tests/test_session_cleanup_guard.py
+            exit 1
+          }
       - name: Check PyRight Syntax
         run: |
           set -e
