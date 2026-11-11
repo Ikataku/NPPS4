@@ -88,7 +88,7 @@ async def add_exp_with_multiplier(
                 raise fastapi.HTTPException(status_code=404, detail="User not found")
 
             before_level = target.level
-            before_exp = target.exp
+            before_exp = core.validate_exp_state(target.level, target.exp)
             applied_exp = core.validate_exp_multiplier(payload.base_exp, payload.multiplier, before_exp)
             transitions = await system_user.add_exp(context, target, applied_exp)
             after_level = target.level
