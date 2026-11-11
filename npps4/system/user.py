@@ -240,7 +240,7 @@ async def add_exp(context: idol.BasicSchoolIdolContext, user: main.User, exp: in
         level_up = True
         user.level = user.level + 1
         next_level_info.append(NextLevelInfo(level=user.level, from_exp=next_exp))
-        next_exp = core.get_next_exp_cumulative(user.level)
+        next_exp += core.get_next_exp(user.level)
         max_energy = core.get_energy_by_rank(user.level)
         # Try to increase max LP. Do it here so add_energy below consider it into account.
         user.energy_max = max_energy
