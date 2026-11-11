@@ -53,6 +53,21 @@ def validate_exp_delta(exp: int, current_exp: int = 0) -> int:
     return exp
 
 
+def validate_exp_multiplier(base_exp: int, multiplier: int, current_exp: int = 0) -> int:
+    """Return a multiplied EXP delta after checking the final SQLite value."""
+    if type(multiplier) is not int or multiplier < 1:
+        raise ValueError("EXP multiplier must be a positive integer")
+
+    base_exp = validate_exp_delta(base_exp, current_exp)
+    if base_exp == 0:
+        return 0
+
+    available = MAX_SQLITE_INT - current_exp
+    if multiplier > available // base_exp:
+        raise ValueError("resulting EXP exceeds SQLite signed 64-bit integer range")
+    return base_exp * multiplier
+
+
 # functools.cache does not play very well with type checking right now.
 if not TYPE_CHECKING:
     get_next_exp_cumulative = functools.cache(get_next_exp_cumulative)
