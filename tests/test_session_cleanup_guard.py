@@ -41,11 +41,7 @@ class SessionCleanupGuardTests(unittest.IsolatedAsyncioTestCase):
     def setUpClass(cls) -> None:
         tree = ast.parse(SESSION_PATH.read_text(encoding="utf-8"))
         function = next(
-            (
-                node
-                for node in tree.body
-                if isinstance(node, ast.AsyncFunctionDef) and node.name == "try_cleanup_tokens"
-            ),
+            (node for node in tree.body if isinstance(node, ast.AsyncFunctionDef) and node.name == "try_cleanup_tokens"),
             None,
         )
         if function is None:
