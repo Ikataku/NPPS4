@@ -3,6 +3,7 @@ import asyncio
 import unittest
 from pathlib import Path
 from types import SimpleNamespace, TracebackType
+from typing import Any
 from unittest.mock import AsyncMock
 
 
@@ -51,7 +52,7 @@ class SessionCleanupGuardTests(unittest.IsolatedAsyncioTestCase):
             raise RuntimeError("npps4.idol.session.try_cleanup_tokens is missing")
 
         module = ast.Module(body=[function], type_ignores=[])
-        namespace: dict[str, object] = {}
+        namespace: dict[str, Any] = {}
         exec(compile(ast.fix_missing_locations(module), str(SESSION_PATH), "exec"), namespace)
         cls.namespace = namespace
 
