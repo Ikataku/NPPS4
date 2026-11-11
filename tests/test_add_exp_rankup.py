@@ -47,16 +47,20 @@ def _simulate(core, start_level: int, total_exp: int, incremental: bool):
 
 
 class AddExpRankUpTests(unittest.TestCase):
+    user_tree: ast.Module
+    add_exp: ast.AsyncFunctionDef
+
     @classmethod
     def setUpClass(cls):
         cls.core = _load_core()
         cls.user_tree = ast.parse(USER_PATH.read_text(encoding="utf-8"))
-        cls.add_exp = next(
+        add_exp = next(
             (node for node in cls.user_tree.body if isinstance(node, ast.AsyncFunctionDef) and node.name == "add_exp"),
             None,
         )
-        if cls.add_exp is None:
+        if add_exp is None:
             raise RuntimeError("npps4.system.user.add_exp is missing")
+        cls.add_exp = add_exp
 
     def test_cumulative_threshold_is_exactly_previous_plus_next_rank(self):
         for rank in (1, 2, 33, 34, 99, 100, 101, 299, 300, 301, 999, 1000, 2000, 10000):
@@ -82,16 +86,23 @@ class AddExpRankUpTests(unittest.TestCase):
             and _is_core_call(statement.value, "get_next_exp")
         ]
         self.assertEqual(len(increments), 1)
-        argument = increments[0].value.args[0]
+        increment_value = increments[0].value
+        self.assertIsInstance(increment_value, ast.Call)
+        assert isinstance(increment_value, ast.Call)
+        argument = increment_value.args[0]
         self.assertIsInstance(argument, ast.Attribute)
+        assert isinstance(argument, ast.Attribute)
         self.assertEqual(argument.attr, "level")
         self.assertIsInstance(argument.value, ast.Name)
+        assert isinstance(argument.value, ast.Name)
         self.assertEqual(argument.value.id, "user")
 
         validate_calls = [node for node in ast.walk(self.add_exp) if _is_core_call(node, "validate_exp_delta")]
         self.assertEqual(len(validate_calls), 1)
-        self.assertIsInstance(self.add_exp.body[0], ast.Assign)
-        self.assertTrue(_is_core_call(self.add_exp.body[0].value, "validate_exp_delta"))
+        first_statement = self.add_exp.body[0]
+        self.assertIsInstance(first_statement, ast.Assign)
+        assert isinstance(first_statement, ast.Assign)
+        self.assertTrue(_is_core_call(first_statement.value, "validate_exp_delta"))
 
     def test_incremental_and_cumulative_transition_sequences_match(self):
         for start_level in (1, 2, 33, 34, 99, 100, 101, 299, 300, 301, 999):
