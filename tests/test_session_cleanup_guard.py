@@ -1,7 +1,10 @@
 import asyncio
+import os
 import unittest
 from types import TracebackType
 from unittest.mock import AsyncMock, patch
+
+os.environ.setdefault("NPPS4_CONFIG_DOWNLOAD_BACKEND", "none")
 
 from npps4.idol import session
 
