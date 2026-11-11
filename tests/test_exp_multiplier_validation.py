@@ -35,5 +35,35 @@ class ExpMultiplierValidationTests(unittest.TestCase):
                     core.validate_exp_multiplier(0, 2, current_exp)
 
 
+
+
+class ExpStateValidationTests(unittest.TestCase):
+    def test_valid_rank_and_cumulative_exp_boundaries(self) -> None:
+        first_rank_ceiling = core.get_next_exp_cumulative(1)
+        self.assertEqual(core.validate_exp_state(1, 0), 0)
+        self.assertEqual(core.validate_exp_state(1, first_rank_ceiling - 1), first_rank_ceiling - 1)
+        self.assertEqual(core.validate_exp_state(2, first_rank_ceiling), first_rank_ceiling)
+
+    def test_invalid_level_is_rejected(self) -> None:
+        for level in (0, -1, True, False, 1.5, "1", None):
+            with self.subTest(level=level):
+                with self.assertRaisesRegex(ValueError, "positive integer"):
+                    core.validate_exp_state(cast(Any, level), 0)
+
+    def test_invalid_or_inconsistent_exp_is_rejected(self) -> None:
+        first_rank_ceiling = core.get_next_exp_cumulative(1)
+        invalid_states = (
+            (1, -1),
+            (1, True),
+            (1, core.MAX_SQLITE_INT + 1),
+            (1, first_rank_ceiling),
+            (2, first_rank_ceiling - 1),
+        )
+        for level, current_exp in invalid_states:
+            with self.subTest(level=level, current_exp=current_exp):
+                with self.assertRaises(ValueError):
+                    core.validate_exp_state(level, cast(Any, current_exp))
+
+
 if __name__ == "__main__":
     unittest.main()
