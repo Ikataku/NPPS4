@@ -42,6 +42,19 @@ def validate_exp_total(exp: int) -> int:
     return exp
 
 
+def validate_exp_state(level: int, current_exp: int) -> int:
+    """Validate that a user's cumulative EXP belongs to their stored rank."""
+    if type(level) is not int or level < 1:
+        raise ValueError("current user level must be a positive integer")
+
+    current_exp = validate_exp_total(current_exp)
+    rank_floor = get_next_exp_cumulative(level - 1)
+    rank_ceiling = get_next_exp_cumulative(level)
+    if current_exp < rank_floor or current_exp >= rank_ceiling:
+        raise ValueError("current user level and EXP are inconsistent")
+    return current_exp
+
+
 def validate_exp_delta(exp: int, current_exp: int = 0) -> int:
     """Validate a non-negative reward delta and the resulting SQLite EXP total."""
     if type(exp) is not int or exp < 0:
