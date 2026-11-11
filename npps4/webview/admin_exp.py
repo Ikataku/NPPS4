@@ -55,7 +55,5 @@ async def set_absolute_exp(
         "after_level": after_level,
         "before_exp": before_exp,
         "after_exp": after_exp,
-        "rank_transitions": [
-            {"level": item.level, "from_exp": item.from_exp} for item in transitions
-        ],
+        "rank_transitions": [{"level": item.level, "from_exp": item.from_exp} for item in transitions],
     }
