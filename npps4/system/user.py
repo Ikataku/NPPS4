@@ -227,6 +227,30 @@ def add_energy_percentage(
     add_energy(user, energy_to_add, t=t, overflow=overflow)
 
 
+async def set_exp_total(context: idol.BasicSchoolIdolContext, user: main.User, total_exp: int):
+    """Set the absolute EXP total without silently changing the user's rank downward."""
+    total_exp = core.validate_exp_total(total_exp)
+    if type(user.level) is not int or user.level < 1:
+        raise ValueError("current user level must be a positive integer")
+
+    current_exp = core.validate_exp_total(user.exp)
+    rank_floor = core.get_next_exp_cumulative(user.level - 1)
+    rank_ceiling = core.get_next_exp_cumulative(user.level)
+    if current_exp < rank_floor or current_exp >= rank_ceiling:
+        raise ValueError("current user level and EXP are inconsistent")
+    if total_exp < rank_floor:
+        raise ValueError("target EXP would lower the current rank; rank downgrade is not supported")
+
+    if total_exp > current_exp:
+        return await add_exp(context, user, total_exp - current_exp)
+    if total_exp == current_exp:
+        return [NextLevelInfo(level=user.level, from_exp=current_exp)]
+
+    user.exp = total_exp
+    await context.db.main.flush()
+    return [NextLevelInfo(level=user.level, from_exp=current_exp)]
+
+
 async def add_exp(context: idol.BasicSchoolIdolContext, user: main.User, exp: int):
     exp = core.validate_exp_delta(exp, user.exp)
     next_exp = core.get_next_exp_cumulative(user.level)

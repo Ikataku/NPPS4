@@ -33,6 +33,15 @@ def get_next_exp_cumulative(rank: int):
 MAX_SQLITE_INT = (1 << 63) - 1
 
 
+def validate_exp_total(exp: int) -> int:
+    """Validate an absolute EXP total that can be stored in SQLite."""
+    if type(exp) is not int or exp < 0:
+        raise ValueError("EXP total must be a non-negative integer")
+    if exp > MAX_SQLITE_INT:
+        raise ValueError("EXP total exceeds SQLite signed 64-bit integer range")
+    return exp
+
+
 def validate_exp_delta(exp: int, current_exp: int = 0) -> int:
     """Validate a non-negative reward delta and the resulting SQLite EXP total."""
     if type(exp) is not int or exp < 0:
