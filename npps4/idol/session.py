@@ -244,11 +244,15 @@ _currently_cleaning = False
 
 async def try_cleanup_tokens():
     global _currently_cleaning
-    if not _currently_cleaning:
-        _currently_cleaning = True
+    if _currently_cleaning:
+        return
+
+    _currently_cleaning = True
+    try:
         await asyncio.sleep(5)
         async with BasicSchoolIdolContext() as context:
             await cleanup_session_table(context)
+    finally:
         _currently_cleaning = False
 
 
