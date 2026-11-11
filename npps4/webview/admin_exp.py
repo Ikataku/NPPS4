@@ -70,7 +70,6 @@ async def set_absolute_exp(
     }
 
 
-
 @app.core.post("/admin/exp/add")
 async def add_exp_with_multiplier(
     payload: AddExpMultiplierRequest,
