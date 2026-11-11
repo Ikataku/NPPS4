@@ -30,11 +30,7 @@ class NextLevelInfo:
 def _load_set_exp_total():
     user_tree = ast.parse(USER_PATH.read_text(encoding="utf-8"))
     function = next(
-        (
-            node
-            for node in user_tree.body
-            if isinstance(node, ast.AsyncFunctionDef) and node.name == "set_exp_total"
-        ),
+        (node for node in user_tree.body if isinstance(node, ast.AsyncFunctionDef) and node.name == "set_exp_total"),
         None,
     )
     if function is None:
