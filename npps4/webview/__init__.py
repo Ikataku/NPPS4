@@ -12,6 +12,7 @@ if not config.is_script_mode():
     from . import serialcode
     from . import static
     from . import tos
+    from . import admin_exp
 
 from .. import errhand
 from ..app import app
