@@ -87,8 +87,8 @@ class SetExpTotalTests(unittest.IsolatedAsyncioTestCase):
     async def test_lowering_within_current_rank_updates_only_exp(self):
         level = 10
         rank_floor = self.core.get_next_exp_cumulative(level - 1)
-        current_exp = rank_floor + 50
-        target_exp = rank_floor + 25
+        current_exp = rank_floor + max(1, self.core.get_next_exp(level) // 2)
+        target_exp = rank_floor + 1
         user = self.make_user(level, current_exp)
 
         result = await self.set_exp_total(self.context, user, target_exp)
@@ -101,7 +101,7 @@ class SetExpTotalTests(unittest.IsolatedAsyncioTestCase):
     async def test_lowering_below_rank_floor_is_rejected_without_mutation(self):
         level = 10
         rank_floor = self.core.get_next_exp_cumulative(level - 1)
-        current_exp = rank_floor + 25
+        current_exp = rank_floor + 1
         user = self.make_user(level, current_exp)
 
         with self.assertRaisesRegex(ValueError, "rank downgrade"):
@@ -128,7 +128,7 @@ class SetExpTotalTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_same_absolute_total_is_a_noop(self):
         level = 10
-        current_exp = self.core.get_next_exp_cumulative(level - 1) + 25
+        current_exp = self.core.get_next_exp_cumulative(level - 1) + 1
         user = self.make_user(level, current_exp)
 
         result = await self.set_exp_total(self.context, user, current_exp)
