@@ -35,8 +35,6 @@ class ExpMultiplierValidationTests(unittest.TestCase):
                     core.validate_exp_multiplier(0, 2, current_exp)
 
 
-
-
 class ExpStateValidationTests(unittest.TestCase):
     def test_valid_rank_and_cumulative_exp_boundaries(self) -> None:
         first_rank_ceiling = core.get_next_exp_cumulative(1)
