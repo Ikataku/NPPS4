@@ -66,10 +66,7 @@ class AddExpRankUpTests(unittest.TestCase):
     def test_cumulative_threshold_is_exactly_previous_plus_next_rank(self):
         for rank in (1, 2, 33, 34, 99, 100, 101, 299, 300, 301, 999, 1000, 2000, 10000):
             with self.subTest(rank=rank):
-                expected = (
-                    self.core.get_next_exp_cumulative(rank - 1)
-                    + self.core.get_next_exp(rank)
-                )
+                expected = self.core.get_next_exp_cumulative(rank - 1) + self.core.get_next_exp(rank)
                 self.assertEqual(self.core.get_next_exp_cumulative(rank), expected)
 
     def test_actual_add_exp_uses_one_initial_lookup_and_incremental_loop(self):
@@ -80,9 +77,7 @@ class AddExpRankUpTests(unittest.TestCase):
 
         loops = [node for node in ast.walk(self.add_exp) if isinstance(node, ast.While)]
         self.assertEqual(len(loops), 1)
-        self.assertFalse(
-            any(_is_core_call(node, "get_next_exp_cumulative") for node in ast.walk(loops[0]))
-        )
+        self.assertFalse(any(_is_core_call(node, "get_next_exp_cumulative") for node in ast.walk(loops[0])))
 
         increments = [
             statement
@@ -100,9 +95,7 @@ class AddExpRankUpTests(unittest.TestCase):
         self.assertIsInstance(argument.value, ast.Name)
         self.assertEqual(argument.value.id, "user")
 
-        validate_calls = [
-            node for node in ast.walk(self.add_exp) if _is_core_call(node, "validate_exp_delta")
-        ]
+        validate_calls = [node for node in ast.walk(self.add_exp) if _is_core_call(node, "validate_exp_delta")]
         self.assertEqual(len(validate_calls), 1)
         self.assertIsInstance(self.add_exp.body[0], ast.Assign)
         self.assertTrue(_is_core_call(self.add_exp.body[0].value, "validate_exp_delta"))
