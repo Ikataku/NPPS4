@@ -1,7 +1,6 @@
 import asyncio
 import unittest
 from types import TracebackType
-from typing import Any
 from unittest.mock import AsyncMock, patch
 
 from npps4.idol import session
