@@ -37,6 +37,8 @@ class _FailingContext:
 
 
 class SessionCleanupGuardTests(unittest.IsolatedAsyncioTestCase):
+    namespace: dict[str, Any]
+
     @classmethod
     def setUpClass(cls) -> None:
         tree = ast.parse(SESSION_PATH.read_text(encoding="utf-8"))
