@@ -74,7 +74,7 @@ class SetExpTotalTests(unittest.IsolatedAsyncioTestCase):
     def setUpClass(cls):
         cls.function_globals = _load_set_exp_total()
         cls.core = cls.function_globals["core"]
-        cls.set_exp_total = cls.function_globals["set_exp_total"]
+        cls.set_exp_total = staticmethod(cls.function_globals["set_exp_total"])
 
     def setUp(self):
         self.context = SimpleNamespace(db=SimpleNamespace(main=SimpleNamespace(flush=AsyncMock())))
