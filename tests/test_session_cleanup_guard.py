@@ -6,7 +6,6 @@ from types import SimpleNamespace, TracebackType
 from typing import Any
 from unittest.mock import AsyncMock
 
-
 SESSION_PATH = Path(__file__).resolve().parents[1] / "npps4" / "idol" / "session.py"
 
 
