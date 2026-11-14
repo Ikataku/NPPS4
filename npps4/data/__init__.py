@@ -42,6 +42,7 @@ def ensure_no_conflict[T: schema.HasIDString, E: Exception](
 SERVER_DATA_PATH = config.get_server_data_path()
 server_data: ServerData | None = None
 last_server_data_fingerprint: tuple[int, int, int, int] | None = None
+last_server_data_failed_fingerprint: tuple[int, int, int, int] | None = None
 
 
 def _server_data_fingerprint(stat: os.stat_result) -> tuple[int, int, int, int]:
@@ -49,11 +50,14 @@ def _server_data_fingerprint(stat: os.stat_result) -> tuple[int, int, int, int]:
 
 
 def get():
-    global server_data, last_server_data_fingerprint
+    global server_data, last_server_data_fingerprint, last_server_data_failed_fingerprint
 
     stat = os.stat(SERVER_DATA_PATH)
     fingerprint = _server_data_fingerprint(stat)
-    if server_data is None or fingerprint != last_server_data_fingerprint:
+    if server_data is None or (
+        fingerprint != last_server_data_fingerprint
+        and fingerprint != last_server_data_failed_fingerprint
+    ):
         try:
             with open(SERVER_DATA_PATH, "r", encoding="utf-8", newline="") as f:
                 serialized_data = schema.SerializedServerData.model_validate(json.load(f))
@@ -75,16 +79,18 @@ def get():
                 )
                 server_data = new_server_data
                 last_server_data_fingerprint = fingerprint
+                last_server_data_failed_fingerprint = None
         except Exception as e:
             if isinstance(e, KeyboardInterrupt) or server_data is None:
                 raise e from None
+            last_server_data_failed_fingerprint = fingerprint
             util.log("Cannot load new data, using old data for now", util.logging.ERROR, e)
 
     return server_data
 
 
 def update():
-    global last_server_data_fingerprint
+    global last_server_data_fingerprint, last_server_data_failed_fingerprint
     server_data = get()  # ensure not None
     serialized_data = schema.SerializedServerData(
         badwords=server_data.badwords,
@@ -120,3 +126,4 @@ def update():
     server_data = dataclasses.replace(server_data)  # Create new copy
     stat = os.stat(SERVER_DATA_PATH)
     last_server_data_fingerprint = _server_data_fingerprint(stat)
+    last_server_data_failed_fingerprint = None
