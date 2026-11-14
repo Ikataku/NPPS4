@@ -41,14 +41,19 @@ def ensure_no_conflict[T: schema.HasIDString, E: Exception](
 
 SERVER_DATA_PATH = config.get_server_data_path()
 server_data: ServerData | None = None
-last_server_data_timestamp: int = 0
+last_server_data_fingerprint: tuple[int, int, int, int] | None = None
+
+
+def _server_data_fingerprint(stat: os.stat_result) -> tuple[int, int, int, int]:
+    return (stat.st_mtime_ns, stat.st_ctime_ns, stat.st_size, stat.st_ino)
 
 
 def get():
-    global server_data, last_server_data_timestamp
+    global server_data, last_server_data_fingerprint
 
     stat = os.stat(SERVER_DATA_PATH)
-    if server_data is None or stat.st_mtime_ns > last_server_data_timestamp:
+    fingerprint = _server_data_fingerprint(stat)
+    if server_data is None or fingerprint != last_server_data_fingerprint:
         try:
             with open(SERVER_DATA_PATH, "r", encoding="utf-8", newline="") as f:
                 serialized_data = schema.SerializedServerData.model_validate(json.load(f))
@@ -69,18 +74,17 @@ def get():
                     sticker_shop=ensure_no_conflict(serialized_data.sticker_shop),
                 )
                 server_data = new_server_data
+                last_server_data_fingerprint = fingerprint
         except Exception as e:
             if isinstance(e, KeyboardInterrupt) or server_data is None:
                 raise e from None
             util.log("Cannot load new data, using old data for now", util.logging.ERROR, e)
-        finally:
-            last_server_data_timestamp = stat.st_mtime_ns
 
     return server_data
 
 
 def update():
-    global last_server_data_timestamp
+    global last_server_data_fingerprint
     server_data = get()  # ensure not None
     serialized_data = schema.SerializedServerData(
         badwords=server_data.badwords,
@@ -114,4 +118,5 @@ def update():
     os.replace(temp_filename, SERVER_DATA_PATH)
 
     server_data = dataclasses.replace(server_data)  # Create new copy
-    last_server_data_timestamp = time.time_ns()
+    stat = os.stat(SERVER_DATA_PATH)
+    last_server_data_fingerprint = _server_data_fingerprint(stat)
