@@ -100,6 +100,7 @@ class Harness:
             "SERVER_DATA_PATH": "synthetic/server_data.json",
             "server_data": None,
             "last_server_data_fingerprint": None,
+            "last_server_data_failed_fingerprint": None,
         }
 
         tree = ast.parse(SOURCE.read_text(encoding="utf-8"))
@@ -136,24 +137,35 @@ def main() -> None:
     check("failed reload retains old cache", fallback.badwords == ["A"], outcomes)
     check("failed reload retains prior successful fingerprint",
           h.env["last_server_data_fingerprint"] == last_a, outcomes)
+    check("failed fingerprint is remembered",
+          h.env["last_server_data_failed_fingerprint"] == (210, 310, 11, 2), outcomes)
     check("failed reload is logged", len(h.util.logs) == 1, outcomes)
 
-    # Repair the same changed file identity: the next call must retry and adopt it.
+    # A repeat with the same failed fingerprint is not reparsed or relogged.
+    h.get()
+    check("unchanged invalid fingerprint is not retried repeatedly",
+          len(h.util.logs) == 1, outcomes)
+
+    # Repair by replacing the file while preserving mtime; ctime/size/inode change.
+    fp_b2 = FakeStat(210, 311, 12, 3)
+    h.os.current_stat = fp_b2
     h.content = json.dumps({"badwords": ["B"]})
     repaired = h.get()
-    check("same-fingerprint repair is retried", repaired.badwords == ["B"], outcomes)
+    check("same-mtime replacement is retried", repaired.badwords == ["B"], outcomes)
     check("successful retry records new fingerprint",
-          h.env["last_server_data_fingerprint"] == (210, 310, 11, 2), outcomes)
+          h.env["last_server_data_fingerprint"] == (210, 311, 12, 3), outcomes)
+    check("successful retry clears failed fingerprint",
+          h.env["last_server_data_failed_fingerprint"] is None, outcomes)
 
     # Restoring a valid backup with an older mtime still changes ctime/inode and reloads.
-    fp_c = FakeStat(150, 320, 12, 3)
+    fp_c = FakeStat(150, 320, 13, 4)
     h.os.current_stat = fp_c
     h.content = json.dumps({"badwords": ["RESTORED"]})
     restored = h.get()
     check("older-mtime restore is detected", restored.badwords == ["RESTORED"], outcomes)
 
     # Same mtime/size but a changed ctime/inode is detected as a replacement.
-    fp_d = FakeStat(150, 321, 12, 4)
+    fp_d = FakeStat(150, 321, 13, 5)
     h.os.current_stat = fp_d
     h.content = json.dumps({"badwords": ["REPLACED"]})
     replaced = h.get()
@@ -167,7 +179,7 @@ def main() -> None:
 
     # With no cache, a first invalid file raises; server_data remains None, so a
     # corrected file with the same identity is retried on the next call.
-    fp_e = FakeStat(400, 500, 10, 5)
+    fp_e = FakeStat(400, 500, 10, 6)
     cold = Harness(fp_e, "{ invalid json")
     first_failed = False
     try:
